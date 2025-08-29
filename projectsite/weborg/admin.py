@@ -1,52 +1,46 @@
 from django.contrib import admin
-from .models import Category, Priority, Task, SubTask, Note
+from .models import Priority, Category, Task, Note, SubTask
 
 class SubTaskInline(admin.TabularInline):
     model = SubTask
     extra = 1
-    fields = ("title", "status")
+    fields = ("sub_title", "sub_status")
     show_change_link = True
+
 class NoteInline(admin.StackedInline):
     model = Note
     extra = 1
-    fields = ("content", "created_at")
+    fields = ("note_content", "created_at")
     readonly_fields = ("created_at",)
-
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
-    list_display = ("title", "status", "deadline", "priority", "category", )
-    search_fields = ("title", "description",)
-    list_filter = ("status","priority","category",)
-
-    inlines = [SubTaskInline, NoteInline]
-
-@admin.register(SubTask)
-class SubTaskAdmin(admin.ModelAdmin):
-    list_display = ("title","status", "parent_task",)
-    search_fields = ("title",)
-    list_filter = ("status",)
-
-    def get_member_program(self, obj):
-        try:
-            member = SubTask.objects.get(id=obj.parent_task_id)
-            return member.title  
-        except title.DoesNotExist:
-            return None
-
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-    search_fields = ("name",)
 
 @admin.register(Priority)
 class PriorityAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-    search_fields = ("name",)
+    list_display = ("priority_name",)
+    search_fields = ("priority_name",)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("category_name",)
+    search_fields = ("category_name",)
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ("task_title", "task_status", "task_deadline", "task_priority", "task_category")
+    list_filter = ("task_status", "task_priority", "task_category")
+    search_fields = ("task_title", "task_description")
+    inlines = [SubTaskInline, NoteInline]
 
 @admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
-    list_display = ("task","content","created_at",)
-    search_fields = ("content",)
+    list_display = ("note_task", "note_content", "created_at")
     list_filter = ("created_at",)
+    search_fields = ("note_content",)
 
-# Register your models here.
+@admin.register(SubTask)
+class SubTaskAdmin(admin.ModelAdmin):
+    list_display = ("sub_title", "sub_status", "get_parent_task_name")
+    list_filter = ("sub_status",)
+    search_fields = ("sub_title",)
+
+    def get_parent_task_name(self, obj):
+        return obj.sub_parent_task.task_title if obj.sub_parent_task else "-"
